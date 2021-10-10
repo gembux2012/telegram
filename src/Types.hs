@@ -1,0 +1,97 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+module Types where
+
+import Data.Text (Text)
+import GHC.Generics (Generic)
+import Data.Aeson.Types (FromJSON, parseJSON, (.:), withObject)
+import Network.HTTP.Simple (Query)
+import qualified Data.ByteString.Char8 as BS8
+import Control.Monad (when, void, void)
+import Data.Void (Void)
+
+data GetUpdates = GetUpdates Void
+
+data ActionResponse r = AR { actionResponse :: r}
+
+data Url= Url
+ { --requestHost :: BS8.ByteString,
+   requestMethod :: BS8.ByteString,
+   requestPath :: String,--BS8.ByteString,
+   requestQS :: Query 
+ }
+ 
+-- https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates          
+getUpdates ::  Url
+getUpdates  =
+ Url
+   { -- requestHost = BS8.pack   server     ,
+     requestMethod = "GET",
+     requestPath = "https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates",
+     requestQS = []
+   }
+ 
+data Response = Response 
+ { 
+   result :: Either Error [Update] 
+   --errors :: Error 
+ }
+
+instance FromJSON Response where
+  parseJSON = withObject " response " $ \o -> do
+    ok :: String <- o  .: "ok"
+    result <-    
+     if  ok == "true" 
+     then  do
+      r <- o .: "result"
+      res <-  r .: "updates"  
+      return $ Right res 
+     else do 
+      error_code <- o .: "error_code"
+      description <-  o .: "description"
+      return $ Left Error {..}    
+    return Response{..} 
+
+     
+data Update = Update
+ { update_id :: Integer,
+   message   :: Message
+ }
+ deriving (Generic,  FromJSON, Show)
+ 
+data Message = Message 
+  { message_id :: Integer,
+    from       :: From,
+    --"chat "      :: Chat,
+    date       :: Integer,
+    text       :: Text    
+  }
+  deriving (Generic,  FromJSON, Show)
+  
+data From = From 
+  { id :: Integer,
+    is_bot :: Bool,
+    first_name :: Text
+  }
+  deriving (Generic,  FromJSON, Show)
+  
+data Error = Error
+ { error_code :: Int,
+   description  :: String
+ }  
+ deriving (Generic,   Show) 
+ 
+ 
+ 
+ 
+ {--         "chat": {
+           "id": 990022354,
+           "first_name": "Алексей",
+           "type": "private"
+         },
+ --}
