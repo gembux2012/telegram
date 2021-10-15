@@ -9,11 +9,12 @@ module Types where
 
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Data.Aeson.Types (FromJSON, parseJSON, (.:), withObject)
+import Data.Aeson.Types (FromJSON, parseJSON, (.:), withObject, genericParseJSON)
 import Network.HTTP.Simple (Query)
 import qualified Data.ByteString.Char8 as BS8
 import Control.Monad (when, void, void)
 import Data.Void (Void)
+import Data.Aeson.Casing
 
 data GetUpdates = GetUpdates Void
 
@@ -27,7 +28,7 @@ data Url= Url
  }
  
 -- https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates          
-getUpdates ::  Url
+
 getUpdates  =
  Url
    { -- requestHost = BS8.pack   server     ,
@@ -38,10 +39,13 @@ getUpdates  =
  
 data Response = Response 
  { 
-   result :: Either Error [Update] 
-   --errors :: Error 
+   ok :: String,
+   result :: Maybe [Update],
+   error_code :: Maybe Int,
+   description  :: Maybe String 
  }
-
+ deriving(Generic, FromJSON,  Show )
+{--
 instance FromJSON Response where
   parseJSON = withObject " response " $ \o -> do
     ok :: String <- o  .: "ok"
@@ -56,7 +60,7 @@ instance FromJSON Response where
       description <-  o .: "description"
       return $ Left Error {..}    
     return Response{..} 
-
+--}
      
 data Update = Update
  { update_id :: Integer,
@@ -69,25 +73,33 @@ data Message = Message
     from       :: From,
     --"chat "      :: Chat,
     date       :: Integer,
-    text       :: Text    
+    text       :: String  
   }
   deriving (Generic,  FromJSON, Show)
   
 data From = From 
-  { id :: Integer,
-    is_bot :: Bool,
-    first_name :: Text
+  { fromId :: Integer,
+    fromIsBot :: Bool,
+    fromFirstName :: Text
   }
-  deriving (Generic,  FromJSON, Show)
+  deriving (Generic,Show)
   
+instance FromJSON From where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+    
+
+{--  
 data Error = Error
  { error_code :: Int,
    description  :: String
  }  
  deriving (Generic,   Show) 
- 
- 
- 
+--} 
+data ErrorBot = ErrorBot 
+ { id_error :: Int,
+   err_msg :: String
+ } 
+ deriving Show 
  
  {--         "chat": {
            "id": 990022354,
