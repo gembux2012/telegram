@@ -16,27 +16,26 @@ import Control.Monad (when, void, void)
 import Data.Void (Void)
 import Data.Aeson.Casing
 
-data GetUpdates = GetUpdates Void
+
 
 data ActionResponse r = AR { actionResponse :: r}
 
 data Url= Url
  { --requestHost :: BS8.ByteString,
-   requestMethod :: BS8.ByteString,
-   requestPath :: String,--BS8.ByteString,
-   requestQS :: Query 
+   requestMethod :: !BS8.ByteString,
+   requestPath :: !String,--BS8.ByteString,
+   requestQS :: !Query 
  }
  
 -- https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates          
 
-getUpdates  =
- Url
-   { -- requestHost = BS8.pack   server     ,
-     requestMethod = "GET",
-     requestPath = "https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates",
-     requestQS = []
-   }
- 
+data GetUpdates   = GetUpdates 
+ { offset :: Maybe BS8.ByteString,
+   limit :: Maybe Integer,
+   timeout :: Maybe Integer,
+   allowed_updates :: Maybe [String]
+ }
+
 data Response = Response 
  { 
    ok :: String,

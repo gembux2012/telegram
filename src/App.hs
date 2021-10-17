@@ -58,4 +58,6 @@ class Routable q a | q -> a where
 --  pure $ Response $ Left $ Error 0 "it can't be"
 
 instance Routable GetUpdates Response where
-  toUrl GetUpdates = id 
+  toUrl q = Url  "Get" "https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/" [("offset",  offset q),
+                                                                                             ("limit", limit q)]
+                   

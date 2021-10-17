@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8e6e9c2be307eec75157e2fb9139319780711c880404d51959a12e884415f9dd
+-- hash: 951fe620c47e899991e0f59c3233720371ddf9a5fba941b581f98e726761cc25
 
 name:           telegram
 version:        0.1.0.0
@@ -28,6 +28,8 @@ source-repository head
 library
   exposed-modules:
       App
+      Data.Aeson.Casing
+      Data.Aeson.Casing.Internal
       Lib
       Types
   other-modules:
