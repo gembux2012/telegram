@@ -27,6 +27,11 @@ dependencies:
 - exceptions
 - http-conduit
 - bytestring
+- errors
+- hweblib
+- data-accessor
+- unliftio
+
 
 
 library:

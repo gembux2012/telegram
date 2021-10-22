@@ -8,20 +8,26 @@ import Types
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromMaybe)
+import Control.Error (runExceptT, ExceptT)
+import Error
+import GHC.Show (ShowS)
 
 main :: IO ()
-main = do
- resp <- toAPI getUpdates
- case resp of
-  Left ErrorBot{..} -> putStrLn  err_msg 
-  Right Response{..} -> do 
-     when (ok == "false") do
-      print $ show (fromMaybe 0 error_code) <> fromMaybe "" description 
-     case result of 
-      Just r -> do 
-       mapM_ (\Update{..} ->
-        putStrLn  (text message))
-        r
+
+--runBot :: ExceptT e m a -> IO()
+runBot api = do
+ res <- runExceptT  api
+ case res of
+  Left  (ParserError err)   -> putStrLn err
+  Left (OtherHttpError er) -> putStrLn$ show er 
+  Right _ -> putStrLn "Ok"
+ return()
+
+
+main = runBot $ do
+  (Response  res) <- toAPI $ GetUpdates Nothing Nothing Nothing Nothing
+  liftIO $ putStrLn $ show res
+         
     
      
     

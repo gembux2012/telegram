@@ -15,6 +15,7 @@ import qualified Data.ByteString.Char8 as BS8
 import Control.Monad (when, void, void)
 import Data.Void (Void)
 import Data.Aeson.Casing
+import Data.Foldable
 
 
 
@@ -31,35 +32,25 @@ data Url= Url
 
 data GetUpdates   = GetUpdates 
  { offset :: Maybe BS8.ByteString,
-   limit :: Maybe Integer,
-   timeout :: Maybe Integer,
+   limit :: Maybe BS8.ByteString,
+   timeout :: Maybe BS8.ByteString,
    allowed_updates :: Maybe [String]
  }
-
+ deriving  Show 
 data Response = Response 
- { 
-   ok :: String,
-   result :: Maybe [Update],
-   error_code :: Maybe Int,
-   description  :: Maybe String 
+ { result ::  [Update]
+ } | Error 
+ { error_code ::  Int,
+   description :: String
  }
- deriving(Generic, FromJSON,  Show )
-{--
+  | NoResponse
+ deriving  Show 
+
 instance FromJSON Response where
-  parseJSON = withObject " response " $ \o -> do
-    ok :: String <- o  .: "ok"
-    result <-    
-     if  ok == "true" 
-     then  do
-      r <- o .: "result"
-      res <-  r .: "updates"  
-      return $ Right res 
-     else do 
-      error_code <- o .: "error_code"
-      description <-  o .: "description"
-      return $ Left Error {..}    
-    return Response{..} 
---}
+  parseJSON =  withObject "response or error" $ \o -> 
+   asum [Response <$> o .: "result",
+         Error <$> o .: "error_code" <*> o .: "description " ]
+
      
 data Update = Update
  { update_id :: Integer,

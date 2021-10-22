@@ -89,5 +89,10 @@
     <orderEntry type="library" name="hourglass-0.2.12" level="project" />
     <orderEntry type="library" name="asn1-parse-0.9.5" level="project" />
     <orderEntry type="library" name="pem-0.2.4" level="project" />
+    <orderEntry type="library" name="errors-2.3.0" level="project" />
+    <orderEntry type="library" name="safe-0.3.18" level="project" />
+    <orderEntry type="library" name="hweblib-0.6.3" level="project" />
+    <orderEntry type="library" name="data-accessor-0.2.3" level="project" />
+    <orderEntry type="library" name="unliftio-0.2.12.1" level="project" />
   </component>
 </module>
