@@ -4,5 +4,6 @@ import Network.HTTP.Client.Conduit (HttpException)
 
 
 
-data APIError =HTTPError HttpException | OtherHttpError String| ParserError String
+data APIError =HTTPError HttpException |  ParserError String
+data BotError = BotError String 
 

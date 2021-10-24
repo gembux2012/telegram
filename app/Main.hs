@@ -18,8 +18,8 @@ main :: IO ()
 runBot api = do
  res <- runExceptT  api
  case res of
-  Left  (ParserError err)   -> putStrLn err
-  Left (OtherHttpError er) -> putStrLn$ show er 
+  Left  (BotError err)   -> putStrLn err
+  Left (BotError er) -> putStrLn$ show er 
   Right _ -> putStrLn "Ok"
  return()
 
