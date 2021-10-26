@@ -42,7 +42,6 @@
     <orderEntry type="library" name="base-compat-0.11.1" level="project" />
     <orderEntry type="library" name="random-1.1" level="project" />
     <orderEntry type="library" name="unix-2.7.2.2" level="project" />
-    <orderEntry type="library" name="transformers-base-0.4.5.2" level="project" />
     <orderEntry type="library" name="stm-2.5.0.0" level="project" />
     <orderEntry type="library" name="transformers-compat-0.6.5" level="project" />
     <orderEntry type="library" name="exceptions-0.10.4" level="project" />
@@ -94,5 +93,6 @@
     <orderEntry type="library" name="hweblib-0.6.3" level="project" />
     <orderEntry type="library" name="data-accessor-0.2.3" level="project" />
     <orderEntry type="library" name="unliftio-0.2.12.1" level="project" />
+    <orderEntry type="library" name="data-has-0.3.0.0" level="project" />
   </component>
 </module>

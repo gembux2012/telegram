@@ -17,7 +17,9 @@ import Data.Void (Void)
 import Data.Aeson.Casing
 import Data.Foldable
 
-
+newtype Config = Config 
+  { url ::String
+  }
 
 data ActionResponse r = AR { actionResponse :: r}
 
@@ -37,7 +39,7 @@ data GetUpdates   = GetUpdates
    allowed_updates :: Maybe [String]
  }
  deriving  Show 
-data Response = Response 
+data Response' = Response' 
  { result ::  [Update]
  } | Error 
  { error_code ::  Int,
@@ -46,9 +48,9 @@ data Response = Response
   | NoResponse
  deriving  Show 
 
-instance FromJSON Response where
+instance FromJSON Response' where
   parseJSON =  withObject "response or error" $ \o -> 
-   asum [Response <$> o .: "result",
+   asum [Response' <$> o .: "result",
          Error <$> o .: "error_code" <*> o .: "description " ]
 
      

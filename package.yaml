@@ -23,7 +23,6 @@ dependencies:
 - base >= 4.7 && < 5
 - aeson
 - text
-- transformers-base
 - exceptions
 - http-conduit
 - bytestring
@@ -31,6 +30,10 @@ dependencies:
 - hweblib
 - data-accessor
 - unliftio
+- http-client
+- http-types
+- data-has
+- mtl
 
 
 
