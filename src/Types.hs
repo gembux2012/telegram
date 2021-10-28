@@ -18,27 +18,30 @@ import Data.Aeson.Casing
 import Data.Foldable
 
 newtype Config = Config 
-  { url ::String
+  { url :: String
   }
-
-data ActionResponse r = AR { actionResponse :: r}
 
 data Url= Url
  { --requestHost :: BS8.ByteString,
-   requestMethod :: !BS8.ByteString,
-   requestPath :: !String,--BS8.ByteString,
-   requestQS :: !Query 
+   requestMethod :: BS8.ByteString,
+   requestPath :: String,--BS8.ByteString,
+   requestQS :: Query 
  }
- 
--- https://api.telegram.org/bot3012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/getupdates          
 
+--GetUpdates :: Maybe Integer -> Maybe Integer -> Maybe Integer -> Maybe [String] -> GetUpdates 
 data GetUpdates   = GetUpdates 
- { offset :: Maybe BS8.ByteString,
-   limit :: Maybe BS8.ByteString,
-   timeout :: Maybe BS8.ByteString,
+ { offset :: Maybe Integer,
+   limit :: Maybe Integer,
+   timeout :: Maybe Integer,
    allowed_updates :: Maybe [String]
  }
- deriving  Show 
+
+data SendMessage = SendMessage
+ { chat_id :: Integer,
+   text :: String
+ } 
+ deriving  Show
+  
 data Response' = Response' 
  { result ::  [Update]
  } | Error 
@@ -61,13 +64,16 @@ data Update = Update
  deriving (Generic,  FromJSON, Show)
  
 data Message = Message 
-  { message_id :: Integer,
-    from       :: From,
+  { mesMessageId :: Integer,
+    mesFrom       :: From,
     --"chat "      :: Chat,
-    date       :: Integer,
-    text       :: String  
+    mesDate       :: Integer,
+    mesText       :: String  
   }
-  deriving (Generic,  FromJSON, Show)
+  deriving (Generic,   Show)
+  
+instance FromJSON Message where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase  
   
 data From = From 
   { fromId :: Integer,

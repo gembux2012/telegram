@@ -13,7 +13,7 @@ data BotError = BotError String
 checkError (HTTPError(HttpExceptionRequest _  (ConnectionFailure e))) = do
             hoistEither $ Left $ BotError "connection failure"
 checkError (HTTPError(HttpExceptionRequest _  (StatusCodeException resp  _))) = do
-            hoistEither $ Left $ BotError $ " no 200 " <> show (getResponseStatus resp)
+            hoistEither $ Left $ BotError $ " no 200: " <> show (getResponseStatus resp) 
 checkError (HTTPError(InvalidUrlException url er)) = do
             hoistEither $ Left $ BotError $ show $ "url: " <> url <> " " <> er         
 checkError (HTTPError(HttpExceptionRequest _ content)) = do
