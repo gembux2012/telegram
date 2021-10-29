@@ -46,8 +46,6 @@ responseToRequest Url {..} =do
      httpBS $ setRequestMethod requestMethod $
               setRequestQueryString  requestQS $ 
               setRequestCheckStatus request' 
-              -- setRequestResponseTimeout  (20 :: Integer) request' $
-
 
 class Routable  q a | q -> a where
   toUrl ::  q -> Config -> Url
@@ -60,17 +58,17 @@ class Routable  q a | q -> a where
        set <- lift getSetting
        req <- try $ liftIO $ responseToRequest $ toUrl q set
        req' <- hoistEither $ first HTTPError req
-       hoistEither $ note (ParserError $ show req') (decodeStrict (getResponseBody req'))
+       hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
 
         
-instance Routable  GetUpdates Response' where
+instance Routable  GetUpdates Updates where
          toUrl q s  = Url "GET " 
-                  (url s <> "getupdates") 
+                   (url s <> "getupdates") 
                    [("offset" , bS $ offset q) ,
                     ("limit", bS $ limit q),
                     ("timeout", bS $ timeout q)  
                     ] 
-instance Routable SendMessage Response' where
+instance Routable SendMessage Update where
           toUrl q s  = Url  "GET" 
                       (url s <> "sendmessage")  
                       [("chat_id", bS $ Just (chat_id q)),
@@ -81,7 +79,7 @@ instance Routable SendMessage Response' where
 
 
 class Bytestrigable a where
- bS :: a -> Maybe BS8.ByteString
+       bS :: a -> Maybe BS8.ByteString
 
 instance Bytestrigable  (Maybe Integer) where
          bS  (Just c) =  Just (BS8.pack . show $ c)
@@ -99,12 +97,12 @@ instance Bytestrigable (Maybe String) where
 newtype Settings m = Settings {doGetConfig :: m Config}
   
 class Monad m  => Setting m where
-  getSetting ::  m Config
+      getSetting ::  m Config
 
 instance
-   ( Has (Settings m) r,
-    Monad m,
-    MonadIO m
+ ( Has (Settings m) r,
+	Monad m,
+	MonadIO m
   ) =>
   Setting (ReaderT r m)
    where

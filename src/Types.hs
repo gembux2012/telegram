@@ -27,8 +27,7 @@ data Url= Url
    requestPath :: String,--BS8.ByteString,
    requestQS :: Query 
  }
-
---GetUpdates :: Maybe Integer -> Maybe Integer -> Maybe Integer -> Maybe [String] -> GetUpdates 
+ 
 data GetUpdates   = GetUpdates 
  { offset :: Maybe Integer,
    limit :: Maybe Integer,
@@ -38,26 +37,32 @@ data GetUpdates   = GetUpdates
 
 data SendMessage = SendMessage
  { chat_id :: Integer,
-   text :: String
+   text :: String,
+   reply_markup :: String
  } 
  deriving  Show
+ -- {
+     --            "inline_keyboard": [
+     --                [
+     --                    {"text": "Yes", "callback_data": "1"},
+     --                    {"text": "No", "callback_data": "2"}
+     --                ]
+     --            ]
+     --        }
   
-data Response' = Response' 
- { result ::  [Update]
- } | Error 
- { error_code ::  Int,
-   description :: String
- }
-  | NoResponse
- deriving  Show 
+newtype Updates
+  = Updates {result :: [Update']}
+  deriving (Generic , FromJSON, Show) 
 
-instance FromJSON Response' where
-  parseJSON =  withObject "response or error" $ \o -> 
-   asum [Response' <$> o .: "result",
-         Error <$> o .: "error_code" <*> o .: "description " ]
+newtype Update
+  = Update {updateResult :: Message}
+  deriving (Generic ,  Show)
 
+instance FromJSON Update where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase   
+   
      
-data Update = Update
+data Update' = Update'
  { update_id :: Integer,
    message   :: Message
  }
@@ -66,7 +71,7 @@ data Update = Update
 data Message = Message 
   { mesMessageId :: Integer,
     mesFrom       :: From,
-    --"chat "      :: Chat,
+    mesChat       :: Chat,
     mesDate       :: Integer,
     mesText       :: String  
   }
@@ -81,27 +86,25 @@ data From = From
     fromFirstName :: Text
   }
   deriving (Generic,Show)
-  
+ 
 instance FromJSON From where
     parseJSON = genericParseJSON $ aesonPrefix snakeCase
     
 
-{--  
-data Error = Error
- { error_code :: Int,
-   description  :: String
- }  
- deriving (Generic,   Show) 
---} 
 data ErrorBot = ErrorBot 
  { id_error :: Int,
    err_msg :: String
  } 
  deriving Show 
  
- {--         "chat": {
-           "id": 990022354,
-           "first_name": "Алексей",
-           "type": "private"
-         },
- --}
+data Chat = Chat
+ { chatId :: Integer,
+   chatFirstName :: String,
+   chatType :: String
+  }
+  deriving (Generic,Show)
+ 
+instance FromJSON Chat where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+
