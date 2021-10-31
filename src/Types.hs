@@ -8,8 +8,8 @@
 module Types where
 
 import Data.Text (Text)
-import GHC.Generics (Generic)
-import Data.Aeson.Types (FromJSON, parseJSON, (.:), withObject, genericParseJSON)
+import GHC.Generics
+import Data.Aeson.Types (FromJSON, parseJSON, (.:), genericParseJSON, ToJSON, toJSON, fieldLabelModifier, genericToJSON)
 import Network.HTTP.Simple (Query)
 import qualified Data.ByteString.Char8 as BS8
 import Control.Monad (when, void, void)
@@ -38,9 +38,26 @@ data GetUpdates   = GetUpdates
 data SendMessage = SendMessage
  { chat_id :: Integer,
    text :: String,
-   reply_markup :: String
+   reply_markup :: Keyboard
  } 
  deriving  Show
+ 
+newtype Keyboard = Keyboard {inline_keyboard :: [Key] }
+ deriving (Generic , ToJSON,  Show)
+
+data Key = Key 
+ { keyText :: String,
+   keyCallbackData :: String
+ }
+ deriving (Generic ,  Show)
+
+instance ToJSON Key where
+  toJSON = genericToJSON $ aesonPrefix snakeCase
+     
+instance FromJSON Key where
+  parseJSON = genericParseJSON $ aesonPrefix snakeCase       
+ 
+ 
  -- {
      --            "inline_keyboard": [
      --                [

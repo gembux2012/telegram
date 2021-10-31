@@ -72,7 +72,8 @@ instance Routable SendMessage Update where
           toUrl q s  = Url  "GET" 
                       (url s <> "sendmessage")  
                       [("chat_id", bS $ Just (chat_id q)),
-                       ("text", bS  $ Just (text q))
+                       ("text", bS  $ Just (text q)),
+                       ("reply_markup" , bS $ Just ( reply_markup q))
                        ]                                            
 
 
@@ -107,3 +108,5 @@ instance
   Setting (ReaderT r m)
    where
    getSetting =  asks getter >>= \(Settings doGetConf  ) -> lift doGetConf
+   
+   
