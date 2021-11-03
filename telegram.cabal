@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e9c795d626d933b00ff016bae51b577b580b971b741b3d32086a7f812dc8008f
+-- hash: ac06197d1bf3f4676caa8ddf7d6c069d7fea89ad607644b3389243af9f7ecb54
 
 name:           telegram
 version:        0.1.0.0
@@ -28,10 +28,12 @@ source-repository head
 library
   exposed-modules:
       App
+      Class
       Data.Aeson.Casing
       Data.Aeson.Casing.Internal
       Error
       Lib
+      MutableList
       Types
   other-modules:
       Paths_telegram
@@ -41,6 +43,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , data-accessor
     , data-has
     , errors
@@ -49,6 +52,7 @@ library
     , http-conduit
     , http-types
     , hweblib
+    , lifted-base
     , mtl
     , text
     , unliftio
@@ -65,6 +69,7 @@ executable telegram-exe
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , data-accessor
     , data-has
     , errors
@@ -73,6 +78,7 @@ executable telegram-exe
     , http-conduit
     , http-types
     , hweblib
+    , lifted-base
     , mtl
     , telegram
     , text
@@ -91,6 +97,7 @@ test-suite telegram-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , data-accessor
     , data-has
     , errors
@@ -99,6 +106,7 @@ test-suite telegram-test
     , http-conduit
     , http-types
     , hweblib
+    , lifted-base
     , mtl
     , telegram
     , text

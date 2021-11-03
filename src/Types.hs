@@ -17,8 +17,11 @@ import Data.Void (Void)
 import Data.Aeson.Casing
 import Data.Foldable
 
-newtype Config = Config 
-  { url :: String
+data Config = Config 
+  { host :: String,
+    path :: String,
+    button :: Int
+  
   }
 
 data Url= Url
@@ -38,7 +41,7 @@ data GetUpdates   = GetUpdates
 data SendMessage = SendMessage
  { chat_id :: Integer,
    text :: String,
-   reply_markup :: Keyboard
+   reply_markup :: String
  } 
  deriving  Show
  

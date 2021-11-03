@@ -63,14 +63,14 @@ class Routable  q a | q -> a where
         
 instance Routable  GetUpdates Updates where
          toUrl q s  = Url "GET " 
-                   (url s <> "getupdates") 
+                   "getupdates" 
                    [("offset" , bS $ offset q) ,
                     ("limit", bS $ limit q),
                     ("timeout", bS $ timeout q)  
                     ] 
 instance Routable SendMessage Update where
           toUrl q s  = Url  "GET" 
-                      (url s <> "sendmessage")  
+                       "sendmessage"  
                       [("chat_id", bS $ Just (chat_id q)),
                        ("text", bS  $ Just (text q)),
                        ("reply_markup" , bS $ Just ( reply_markup q))

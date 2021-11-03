@@ -94,5 +94,8 @@
     <orderEntry type="library" name="data-accessor-0.2.3" level="project" />
     <orderEntry type="library" name="unliftio-0.2.12.1" level="project" />
     <orderEntry type="library" name="data-has-0.3.0.0" level="project" />
+    <orderEntry type="library" name="lifted-base-0.2.3.12" level="project" />
+    <orderEntry type="library" name="monad-control-1.0.2.3" level="project" />
+    <orderEntry type="library" name="transformers-base-0.4.5.2" level="project" />
   </component>
 </module>
