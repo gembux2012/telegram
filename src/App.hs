@@ -34,7 +34,7 @@ import Error
 import Network.HTTP.Simple -- (httpBS, setRequestMethod, setRequestQueryString, getResponseBody, httpLBS)
 import Network.HTTP.Types
 import Data.Has (Has, getter)
-import Control.Monad.Reader (ReaderT, ask, runReaderT, liftIO, MonadIO, lift, asks)
+import Control.Monad.Reader (ReaderT, ask, runReaderT, liftIO, MonadIO, lift, asks, MonadReader)
 import Data.Char (toLower)
 import Data.Text.Internal.Lazy (Text)
 
@@ -49,13 +49,13 @@ responseToRequest Url {..} =do
 
 class Routable  q a | q -> a where
   toUrl ::  q -> Config -> Url
-  toAPI :: (FromJSON a, Monad m , MonadIO m, MonadCatch m, Setting m)
+  toAPI :: (FromJSON a, Monad m , MonadIO m, MonadCatch m, MonadReader (a,Config) m)
             =>  q -> ExceptT BotError m a
   toAPI  q =
     catchE  action  checkError
      where 
       action = do
-       set <- lift getSetting
+       set <- asks  snd 
        req <- try $ liftIO $ responseToRequest $ toUrl q set
        req' <- hoistEither $ first HTTPError req
        hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
