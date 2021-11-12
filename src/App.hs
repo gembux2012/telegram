@@ -48,28 +48,28 @@ responseToRequest Url {..} =do
               setRequestCheckStatus request' 
 
 class Routable  q a | q -> a where
-  toUrl ::  q -> Config -> Url
-  toAPI :: (FromJSON a, Monad m , MonadIO m, MonadCatch m, MonadReader (a,Config) m)
+  toUrl ::  q ->  Url
+  toAPI :: (FromJSON a, Monad m , MonadIO m, MonadCatch m )
             =>  q -> ExceptT BotError m a
   toAPI  q =
     catchE  action  checkError
      where 
       action = do
-       set <- asks  snd 
-       req <- try $ liftIO $ responseToRequest $ toUrl q set
+       --set <- asks  snd 
+       req <- try $ liftIO $ responseToRequest $ toUrl q 
        req' <- hoistEither $ first HTTPError req
        hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
 
         
 instance Routable  GetUpdates Updates where
-         toUrl q s  = Url "GET " 
+         toUrl q   = Url "GET " 
                    "getupdates" 
                    [("offset" , bS $ offset q) ,
                     ("limit", bS $ limit q),
                     ("timeout", bS $ timeout q)  
                     ] 
 instance Routable SendMessage Update where
-          toUrl q s  = Url  "GET" 
+          toUrl q   = Url  "GET" 
                        "sendmessage"  
                       [("chat_id", bS $ Just (chat_id q)),
                        ("text", bS  $ Just (text q)),
@@ -79,9 +79,8 @@ instance Routable SendMessage Update where
 
 
 
-class Bytestrigable a where
-       bS :: a -> Maybe BS8.ByteString
-
+class    Bytestrigable a where
+         bS :: a -> Maybe BS8.ByteString
 instance Bytestrigable  (Maybe Integer) where
          bS  (Just c) =  Just (BS8.pack . show $ c)
          bS Nothing  = Nothing
