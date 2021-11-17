@@ -37,7 +37,7 @@ runBot api = do
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
                       2
-  res <- runReaderT (runExceptT  api ) (config)
+  res <- runReaderT (runExceptT  api ) config
   case res of
     Left (BotError err) -> putStrLn err
     Right _ -> putStrLn "bot stopped ok"
