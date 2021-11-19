@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "result": [
+    {
+      "update_id": 626298736,
+      "callback_query": {
+        "id": "4252113633219724888",
+        "from": {
+          "id": 990022354,
+          "is_bot": false,
+          "first_name": "\u0410\u043b\u0435\u043a\u0441\u0435\u0439",
+          "language_code": "ru"
+        },
+        "message": {
+          "message_id": 46,
+          "from": {
+            "id": 2012575953,
+            "is_bot": true,
+            "first_name": "mystupidbot",
+            "username": "GAV1969_bot"
+          },
+          "chat": {
+            "id": 990022354,
+            "first_name": "\u0410\u043b\u0435\u043a\u0441\u0435\u0439",
+            "type": "private"
+          },
+          "date": 1636516647,
+          "text": "\"\u043f\u0440\u0438\u0432\u0435\u0442\"",
+          "reply_markup": {
+            "inline_keyboard": [
+              [
+                {
+                  "text": "Yes",
+                  "callback_data": "1"
+                },
+                {
+                  "text": "No",
+                  "callback_data": "2"
+                }
+              ]
+            ]
+          }
+        },
+        "chat_instance": "578617624799265807",
+        "data": "1"
+      }
+    }
+  ]
+}
