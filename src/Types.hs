@@ -84,16 +84,18 @@ instance FromJSON Update where
      
 data Update' = Update'
  { update_id :: Integer,
-   message   :: Message
+   message   :: Message,
+   mesChat   :: Chat,
+   mesDate   :: Integer,
+   mesText   :: String,
+   mesData   :: Maybe Integer  
+   
  }
  deriving (Generic,  FromJSON, Show)
  
 data Message = Message 
   { mesMessageId :: Integer,
-    mesFrom       :: From,
-    mesChat       :: Chat,
-    mesDate       :: Integer,
-    mesText       :: String  
+    mesFrom       :: From
   }
   deriving (Generic,   Show)
   

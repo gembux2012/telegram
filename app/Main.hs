@@ -25,6 +25,7 @@ import Types
 import Data.Traversable (for)
 import Data.Aeson (encode)
 import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString.Lazy as LBS
 
 
 
@@ -53,7 +54,7 @@ telegram  = do
   getUpdates (Just 20) Nothing (Just 20) Nothing 
   where 
      getUpdates  o l t a_u  = do
-      c <- ask
+      config <- ask
       liftIO $ putStrLn "waiting for an answer"
       --liftIO $ putStrLn c
       (Updates update) <- toAPI $ GetUpdates o l t a_u
@@ -61,24 +62,23 @@ telegram  = do
         mapM_
           ( \Update' {..} ->
               do
-                liftIO $ putStrLn $ "answer message: " <> mesText message 
+                liftIO $ putStrLn $ "answer message: " <> mesText
                 let id = fromId (mesFrom message)
-                let answer = prepareAnswer id (mesText message)  
-                toAPI $ SendMessage id (mesText message) ""
+                let answer = prepareAnswer id mesText  mesData   
+                toAPI $ SendMessage id mesText  ""
           )
           update
       let last_id = update_id (last update) 
       getUpdates (Just (last_id + 1 :: Integer )) Nothing (Just 20) Nothing
         
---createButton :: Int -> ByteString 
---createButton  y = encode $  [1..y+1] >>= \y -> [[Key (show y) (show y)]]
 
+--prepareAnswer :: (Num (Maybe a -> a), Enum (Maybe a -> a), Show (Maybe a -> a)) => p -> [Char] -> a -> ([Char], ByteString)
 prepareAnswer from text button = do
  case text of
   ['\\', 'r', 'e', 'p', 'e', 'a', 't'] ->
-    return ("how many times will you repeat ?", createButton )
+    ("how many times will you repeat ?", createButton) 
   where 
-    createButton = encode $  [1..button+1] >>= \y -> [[Key (show y) (show y)]]
+    createButton = LBS.toStrict $ encode $  [1..(fromMaybe button)+1] >>= \y -> [[Key (show y) (show y)]]
        
  
    
