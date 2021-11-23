@@ -6,6 +6,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -24,63 +26,64 @@ import GHC.Show (ShowS)
 import Types
 import Data.Traversable (for)
 import Data.Aeson (encode)
-import Data.ByteString.Char8 (ByteString)
+import  qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.Map as Map
+import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get)
+import Text.Read (readMaybe)
 
-
-
-
-main :: IO ()
-
---runBot :: (Monad m, MonadIO IO) => ExceptT BotError (ReaderT (Application m) m) a -> IO ()
---runBot:: (Show a, Show b) =>                 ExceptT                   BotError (ReaderT (Application (a1 -> IO ()), Config) IO) a2                 -> IO ()
+--runBot :: ExceptT BotError (ReaderT Config IO) a -> IO ()
 runBot api = do
+  let list_user = Map.empty
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
                       2
-  res <- runReaderT (runExceptT  api ) config
+  res <- evalStateT (runReaderT (runExceptT  api ) config) list_user
   case res of
     Left (BotError err) -> putStrLn err
     Right _ -> putStrLn "bot stopped ok"
   return ()
   
         
-        
 main = runBot  telegram 
 
---telegram :: (MonadIO m) => ExceptT BotError m b
 telegram  = do
-  --c <- ask 
   getUpdates (Just 20) Nothing (Just 20) Nothing 
   where 
      getUpdates  o l t a_u  = do
-      config <- ask
-      liftIO $ putStrLn "waiting for an answer"
-      --liftIO $ putStrLn c
+      liftIO $ putStrLn "awaiting message"
       (Updates update) <- toAPI $ GetUpdates o l t a_u
       unless (null update) do
+        Config _ _ btn  <- ask
+        user <- get
         mapM_
-          ( \Update' {..} ->
-              do
-                liftIO $ putStrLn $ "answer message: " <> mesText
-                let id = fromId (mesFrom message)
-                let answer = prepareAnswer id mesText  mesData   
-                toAPI $ SendMessage id mesText  ""
+          ( \case
+              Msg _ message
+                -> do liftIO $ putStrLn $ "answer message: " <> mesText message
+                      let id = fromId (mesFrom message)
+                      let answer = prepareAnswer id (mesText message) user  btn
+                      liftIO $ BS8.putStrLn $ snd answer
+                      toAPI $ uncurry (SendMessage id) answer
+              CallbackQ _ callback
+               -> do liftIO $ putStrLn  "callback "
+                     modify (Map.insert (fromId(cbFrom callback)) (read(cbData callback)))
+                     toAPI $ SendMessage (fromId(cbFrom callback)) " good " "" 
           )
           update
-      let last_id = update_id (last update) 
-      getUpdates (Just (last_id + 1 :: Integer )) Nothing (Just 20) Nothing
-        
+        let last_id = update_id (last update) 
+        getUpdates (Just (last_id + 1 :: Integer )) Nothing (Just 20) Nothing
+      getUpdates (Just 20) Nothing (Just 20) Nothing  
 
---prepareAnswer :: (Num (Maybe a -> a), Enum (Maybe a -> a), Show (Maybe a -> a)) => p -> [Char] -> a -> ([Char], ByteString)
-prepareAnswer from text button = do
+--prepareAnswer ::  p -> [Char] -> Int -> ([Char], BS8.ByteString)
+prepareAnswer from text user button = 
  case text of
-  ['\\', 'r', 'e', 'p', 'e', 'a', 't'] ->
-    ("how many times will you repeat ?", createButton) 
+  '/' : "repeat" -> ("how many times should I tell you ?", createButton)
+  '/': "help" -> ("available commands: /help, /repeat","")
+  '/': _   -> ("Unknown command, use /help ", "")    
+  _ -> (concat[text <>", " | r <- [1..r]],"")
   where 
-    createButton = LBS.toStrict $ encode $  [1..(fromMaybe button)+1] >>= \y -> [[Key (show y) (show y)]]
-       
- 
+    createButton = LBS.toStrict $ encode $ Keyboard [ [1.. button+1] >>= \y -> [Key (show y) (show y)]]     
+    r = fromMaybe 1 (Map.lookup from user) 
    
 
 data Application m = Application 

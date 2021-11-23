@@ -15,7 +15,7 @@ checkError (HTTPError(HttpExceptionRequest _  (ConnectionFailure e))) = do
 checkError (HTTPError(HttpExceptionRequest _  (StatusCodeException resp  _))) = do
             hoistEither $ Left $ BotError $ " no 200: " <> show (getResponseStatus resp) 
 checkError (HTTPError(InvalidUrlException url er)) = do
-            hoistEither $ Left $ BotError $ show $ "url: " <> url <> " " <> er         
+            hoistEither $ Left $ BotError $ show $ "url : " <> url <> " " <> er         
 checkError (HTTPError(HttpExceptionRequest _ content)) = do
              hoistEither $ Left $ BotError $ show content    
 checkError (ParserError err') = do 

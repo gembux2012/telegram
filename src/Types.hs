@@ -9,13 +9,14 @@ module Types where
 
 import Data.Text (Text)
 import GHC.Generics
-import Data.Aeson.Types (FromJSON, parseJSON, (.:), genericParseJSON, ToJSON, toJSON, fieldLabelModifier, genericToJSON)
+import Data.Aeson.Types (FromJSON, parseJSON, (.:), genericParseJSON, ToJSON, toJSON, fieldLabelModifier, genericToJSON, withObject)
 import Network.HTTP.Simple (Query)
 import qualified Data.ByteString.Char8 as BS8
 import Control.Monad (when, void, void)
 import Data.Void (Void)
 import Data.Aeson.Casing
 import Data.Foldable
+import Data.ByteString.Char8 (ByteString)
 
 data Config = Config 
   { host :: String,
@@ -39,13 +40,13 @@ data GetUpdates   = GetUpdates
  }
 
 data SendMessage = SendMessage
- { chat_id :: Integer,
-   text :: String,
-   reply_markup :: String
+ { chat_id ::  Integer,
+   text ::  String,
+   reply_markup :: BS8.ByteString
  } 
  deriving  Show
  
-newtype Keyboard = Keyboard {inline_keyboard :: [Key] }
+newtype Keyboard = Keyboard {inline_keyboard :: [[Key]] }
  deriving (Generic , ToJSON,  Show)
 
 data Key = Key 
@@ -60,19 +61,11 @@ instance ToJSON Key where
 instance FromJSON Key where
   parseJSON = genericParseJSON $ aesonPrefix snakeCase       
  
+newtype  Updates  = Updates {result :: [Update'] }
+ deriving (Generic, FromJSON,  Show)
  
- -- {
-     --            "inline_keyboard": [
-     --                [
-     --                    {"text": "Yes", "callback_data": "1"},
-     --                    {"text": "No", "callback_data": "2"}
-     --                ]
-     --            ]
-     --        }
+
   
-newtype Updates
-  = Updates {result :: [Update']}
-  deriving (Generic , FromJSON, Show) 
 
 newtype Update
   = Update {updateResult :: Message}
@@ -82,20 +75,36 @@ instance FromJSON Update where
     parseJSON = genericParseJSON $ aesonPrefix snakeCase   
    
      
-data Update' = Update'
+data Update' = Msg
  { update_id :: Integer,
-   message   :: Message,
-   mesChat   :: Chat,
-   mesDate   :: Integer,
-   mesText   :: String,
-   mesData   :: Maybe Integer  
-   
+   message   ::  Message
+ } | CallbackQ 
+ { update_id :: Integer,
+   callback_query   :: Callback 
  }
- deriving (Generic,  FromJSON, Show)
+ deriving  Show
+ 
+instance FromJSON Update' where
+  parseJSON = withObject "msg or callback" $ \o -> asum [
+    Msg <$> o .: "update_id" <*> o .: "message",
+    CallbackQ <$> o .: "update_id" <*> o .: "callback_query" ] 
+    
+data  Callback = Callback  
+   {cbFrom :: From,
+    cbData  :: String
+   }
+ deriving (Generic,  Show)
+
+instance FromJSON Callback where
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase       
  
 data Message = Message 
   { mesMessageId :: Integer,
-    mesFrom       :: From
+    mesFrom       :: From,
+     mesChat   :: Chat,
+     mesDate   :: Integer,
+     mesText   :: String,
+     mesData   :: Maybe Integer
   }
   deriving (Generic,   Show)
   
