@@ -36,6 +36,9 @@ dependencies:
 - mtl
 - containers
 - lifted-base
+- time
+- filepath
+- directory
 
 
 

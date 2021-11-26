@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ac06197d1bf3f4676caa8ddf7d6c069d7fea89ad607644b3389243af9f7ecb54
+-- hash: 9d8180ddcccfb7b4d55620a193a24e828a67f2db7c68f4ec65f16453c2320be6
 
 name:           telegram
 version:        0.1.0.0
@@ -28,12 +28,13 @@ source-repository head
 library
   exposed-modules:
       App
-      Class
       Data.Aeson.Casing
       Data.Aeson.Casing.Internal
       Error
       Lib
-      MutableList
+      Logger.App
+      Logger.Class
+      Logger.Types
       Types
   other-modules:
       Paths_telegram
@@ -46,8 +47,10 @@ library
     , containers
     , data-accessor
     , data-has
+    , directory
     , errors
     , exceptions
+    , filepath
     , http-client
     , http-conduit
     , http-types
@@ -55,6 +58,7 @@ library
     , lifted-base
     , mtl
     , text
+    , time
     , unliftio
   default-language: Haskell2010
 
@@ -72,8 +76,10 @@ executable telegram-exe
     , containers
     , data-accessor
     , data-has
+    , directory
     , errors
     , exceptions
+    , filepath
     , http-client
     , http-conduit
     , http-types
@@ -82,6 +88,7 @@ executable telegram-exe
     , mtl
     , telegram
     , text
+    , time
     , unliftio
   default-language: Haskell2010
 
@@ -100,8 +107,10 @@ test-suite telegram-test
     , containers
     , data-accessor
     , data-has
+    , directory
     , errors
     , exceptions
+    , filepath
     , http-client
     , http-conduit
     , http-types
@@ -110,5 +119,6 @@ test-suite telegram-test
     , mtl
     , telegram
     , text
+    , time
     , unliftio
   default-language: Haskell2010

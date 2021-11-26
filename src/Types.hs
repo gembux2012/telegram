@@ -18,7 +18,7 @@ import Data.Aeson.Casing
 import Data.Foldable
 import Data.ByteString.Char8 (ByteString)
 
-data Config = Config 
+data Config = Config
   { host :: String,
     path :: String,
     button :: Int
@@ -49,7 +49,7 @@ data SendMessage = SendMessage
 newtype Keyboard = Keyboard {inline_keyboard :: [[Key]] }
  deriving (Generic , ToJSON,  Show)
 
-data Key = Key 
+data Key = Key
  { keyText :: String,
    keyCallbackData :: String
  }
@@ -60,12 +60,12 @@ instance ToJSON Key where
      
 instance FromJSON Key where
   parseJSON = genericParseJSON $ aesonPrefix snakeCase       
- 
+
 newtype  Updates  = Updates {result :: [Update'] }
  deriving (Generic, FromJSON,  Show)
- 
 
-  
+
+
 
 newtype Update
   = Update {updateResult :: Message}
@@ -78,25 +78,25 @@ instance FromJSON Update where
 data Update' = Msg
  { update_id :: Integer,
    message   ::  Message
- } | CallbackQ 
+ } | CallbackQ
  { update_id :: Integer,
-   callback_query   :: Callback 
+   callback_query   :: Callback
  }
  deriving  Show
- 
+
 instance FromJSON Update' where
   parseJSON = withObject "msg or callback" $ \o -> asum [
     Msg <$> o .: "update_id" <*> o .: "message",
-    CallbackQ <$> o .: "update_id" <*> o .: "callback_query" ] 
-    
-data  Callback = Callback  
+    CallbackQ <$> o .: "update_id" <*> o .: "callback_query" ]
+
+data  Callback = Callback
    {cbFrom :: From,
     cbData  :: String
    }
  deriving (Generic,  Show)
 
 instance FromJSON Callback where
-    parseJSON = genericParseJSON $ aesonPrefix snakeCase       
+    parseJSON = genericParseJSON $ aesonPrefix snakeCase
  
 data Message = Message 
   { mesMessageId :: Integer,

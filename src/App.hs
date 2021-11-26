@@ -39,6 +39,7 @@ import Network.HTTP.Simple
 import Network.HTTP.Types
 import Types
 import qualified UnliftIO.Concurrent as U (threadDelay)
+import Logger.Class (Log)
 
 responseToRequest ::
   (Monad m, MonadIO m, MonadThrow m, MonadCatch m) =>
@@ -55,16 +56,18 @@ responseToRequest Url {..} url key = do
   httpBS request 
 
 class Routable q a | q -> a where
-  toUrl :: q -> Url
+  toUrl ::  q -> Url
   toAPI ::
-    (FromJSON a, Monad m, MonadIO m, MonadCatch m, MonadReader Config m) =>
+    (FromJSON a, Monad m, MonadIO m, MonadCatch m) =>
     q ->
     ExceptT BotError m a
   toAPI q =
     catchE action checkError
     where
       action = do
-        Config url key _ <- ask
+        --Config url key _ <- ask
+        let url =""
+        let key ="2"
         req <- try $ liftIO $ responseToRequest (toUrl q) url key
         req' <- hoistEither $ first HTTPError req
         hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))

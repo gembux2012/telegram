@@ -6,8 +6,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE OverloadedStrings  #-}
+--{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -29,16 +30,30 @@ import Data.Aeson (encode)
 import  qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as Map
-import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get)
+import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get, StateT)
 import Text.Read (readMaybe)
+import Logger.Class
+import Logger.Types (Priority(..))
+import Control.Monad.Catch.Pure (MonadCatch)
 
---runBot :: ExceptT BotError (ReaderT Config IO) a -> IO ()
+newtype Logg m =  Logg  {pr ::String -> m()}
+
+--logger = Logg{pr =  print}
+
+
+  
+
+
+
+  
+--runBot :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO () 
 runBot api = do
+  let logger' = Logger print
   let list_user = Map.empty
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
-                      2
-  res <- evalStateT (runReaderT (runExceptT  api ) config) list_user
+                      5
+  res <- evalStateT (runReaderT (runExceptT  api ) (logger', config)) list_user
   case res of
     Left (BotError err) -> putStrLn err
     Right _ -> putStrLn "bot stopped ok"
@@ -46,15 +61,21 @@ runBot api = do
   
         
 main = runBot  telegram 
-
+--telegram ::(Monad m, MonadIO m, Log m) => ExceptT BotError (ReaderT (Logger m, Config) (StateT (Map.Map Integer Integer) m)) () 
 telegram  = do
+  l :: Logg IO  <- asks getter
+  logI "это логгер" 
+ -- putStrLn "jlk"
   getUpdates (Just 20) Nothing (Just 20) Nothing 
-  where 
-     getUpdates  o l t a_u  = do
+--  where 
+
+getUpdates  o l t a_u  = do
       liftIO $ putStrLn "awaiting message"
+     
       (Updates update) <- toAPI $ GetUpdates o l t a_u
       unless (null update) do
-        Config _ _ btn  <- ask
+        Config _ _ btn  <- asks snd 
+        let btn = 2
         user <- get
         mapM_
           ( \case
@@ -67,7 +88,7 @@ telegram  = do
               CallbackQ _ callback
                -> do liftIO $ putStrLn  "callback "
                      modify (Map.insert (fromId(cbFrom callback)) (read(cbData callback)))
-                     toAPI $ SendMessage (fromId(cbFrom callback)) " good " "" 
+                     toAPI $ SendMessage (fromId(cbFrom callback)) " good " (BS8.pack "") 
           )
           update
         let last_id = update_id (last update) 
@@ -78,22 +99,20 @@ telegram  = do
 prepareAnswer from text user button = 
  case text of
   '/' : "repeat" -> ("how many times should I tell you ?", createButton)
-  '/': "help" -> ("available commands: /help, /repeat","")
-  '/': _   -> ("Unknown command, use /help ", "")    
-  _ -> (concat[text <>", " | r <- [1..r]],"")
+  '/': "help" -> ("available commands: /help, /repeat",BS8.pack "")
+  '/': _   -> ("Unknown command, use /help ", BS8.pack "")    
+  _ -> (concat[text <>" " | r <- [1..r]],BS8.pack "")
   where 
-    createButton = LBS.toStrict $ encode $ Keyboard [ [1.. button+1] >>= \y -> [Key (show y) (show y)]]     
+    createButton = LBS.toStrict $ encode $ Keyboard [ [1.. button] >>= \y -> [Key (show y) (show y)]]     
     r = fromMaybe 1 (Map.lookup from user) 
    
 
-data Application m = Application 
- { logerr :: IO()
- 
-  }
-  deriving stock (Generic)
 
-{--
-instance Has (Settings m) (Application m) where
-  getter = config
-  modifier f a = a {config = f . config $ a}
---}
+--newtype Application  m = Application
+--  { logger   :: Logger m
+ -- }
+
+instance Has  (Logger  m) (Logger  m, Config) where
+  getter (x,y)= x
+  --modifier f a = a {logger  = f . logger $ a}
+
