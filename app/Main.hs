@@ -38,7 +38,7 @@ import Control.Monad.Catch.Pure (MonadCatch)
 
 newtype Logg m =  Logg  {pr ::String -> m()}
 
---logger = Logg{pr =  print}
+logger = Logger {dologLn =  print}
 
 
   
@@ -48,7 +48,7 @@ newtype Logg m =  Logg  {pr ::String -> m()}
   
 --runBot :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO () 
 runBot api = do
-  let logger' = Logger print
+  let logger' = Logger{dologLn =  print}
   let list_user = Map.empty
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
@@ -112,7 +112,7 @@ prepareAnswer from text user button =
 --  { logger   :: Logger m
  -- }
 
-instance Has  (Logger  m) (Logger  m, Config) where
-  getter (x,y)= x
+instance Has  (Logger (StateT s m)) (Logger  m, Config) where
+  getter (Logger a,_) =  dologLn a 
   --modifier f a = a {logger  = f . logger $ a}
 
