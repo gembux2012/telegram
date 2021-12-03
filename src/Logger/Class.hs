@@ -39,17 +39,18 @@ class Monad m => Log m where
   logE :: HasCallStack => Loggable a => a -> m ()
 
 instance
- (Has  (Logger (StateT s m)) r ,
-    Monad m,
-    --Show s,
-    MonadIO m
+ (Has  (Logger m) r ,
+    Monad m
+   -- MonadIO m 
   ) =>
-  Log (ExceptT e (ReaderT r (StateT s m))) where
-  logI  a =  lift $ asks getter  >>= \(Logger doLog) -> lift . doLog $ fromLoggable INFO <> " " <>  fromLoggable  a
+  Log (ExceptT e (ReaderT r (StateT s m ))) where
+  logI  a = asks getter >>= \(Logger doLog) ->lift $ lift $ lift . doLog $ fromLoggable INFO <> " " <>  fromLoggable  a
  -- logW a =
    -- asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable WARNING <> " " <>  fromLoggable a
   --logE a =
    -- asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable ERROR <> " " <> fromLoggable a
+
+
 
 instance Loggable Text where
   fromLoggable = id

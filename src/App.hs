@@ -8,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE Strict #-}
 
 module App where
 
@@ -39,7 +40,7 @@ import Network.HTTP.Simple
 import Network.HTTP.Types
 import Types
 import qualified UnliftIO.Concurrent as U (threadDelay)
-import Logger.Class (Log)
+import Logger.Class (Log, Logger)
 
 responseToRequest ::
   (Monad m, MonadIO m, MonadThrow m, MonadCatch m) =>
@@ -55,7 +56,7 @@ responseToRequest Url {..} url key = do
   --liftIO $ print request
   httpBS request 
 
-class Routable q a | q -> a where
+class  Routable q a | q -> a where
   toUrl ::  q -> Url
   toAPI ::
     (FromJSON a, Monad m, MonadIO m, MonadCatch m) =>
@@ -65,7 +66,7 @@ class Routable q a | q -> a where
     catchE action checkError
     where
       action = do
-        --Config url key _ <- ask
+        --Config url key _ <- asks snd
         let url =""
         let key ="2"
         req <- try $ liftIO $ responseToRequest (toUrl q) url key

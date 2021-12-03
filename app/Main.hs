@@ -1,14 +1,16 @@
+{-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
+--{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
+--{-# LANGUAGE AllowAmbiguousTypes #-}
 --{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Main where
 
@@ -30,52 +32,56 @@ import Data.Aeson (encode)
 import  qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as Map
-import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get, StateT)
+import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get, StateT, StateT, StateT)
 import Text.Read (readMaybe)
 import Logger.Class
 import Logger.Types (Priority(..))
 import Control.Monad.Catch.Pure (MonadCatch)
+import qualified Data.Text as T
 
 newtype Logg m =  Logg  {pr ::String -> m()}
 
-logger = Logger {dologLn =  print}
+data Application  m = Application 
+ { logger :: Logger  m
+ }
+
 
 
   
 
 
 
-  
---runBot :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO () 
+pri c a  = putStrLn $ show  $ fromLoggable c <> a   
+runBot ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO () 
 runBot api = do
-  let logger' = Logger{dologLn =  print}
+  let c ="jhk"
+  let logger = Logger{dologLn =  pri c }
   let list_user = Map.empty
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
                       5
-  res <- evalStateT (runReaderT (runExceptT  api ) (logger', config)) list_user
+  res <- evalStateT (runReaderT (runExceptT  api ) (logger, config)) list_user
   case res of
-    Left (BotError err) -> putStrLn err
-    Right _ -> putStrLn "bot stopped ok"
+    Left (BotError err) -> dologLn  logger (fromLoggable ERROR <> fromLoggable err)
+    Right _ -> dologLn  logger (fromLoggable INFO <> fromLoggable " ")
   return ()
-  
+
+ 
         
-main = runBot  telegram 
---telegram ::(Monad m, MonadIO m, Log m) => ExceptT BotError (ReaderT (Logger m, Config) (StateT (Map.Map Integer Integer) m)) () 
+main = runBot  telegram
+ 
+telegram :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) () 
 telegram  = do
-  l :: Logg IO  <- asks getter
   logI "это логгер" 
- -- putStrLn "jlk"
   getUpdates (Just 20) Nothing (Just 20) Nothing 
---  where 
 
 getUpdates  o l t a_u  = do
       liftIO $ putStrLn "awaiting message"
-     
+      Config _ _ btn  <- asks snd
       (Updates update) <- toAPI $ GetUpdates o l t a_u
       unless (null update) do
-        Config _ _ btn  <- asks snd 
-        let btn = 2
+         
+        --let btn = 2
         user <- get
         mapM_
           ( \case
@@ -109,10 +115,10 @@ prepareAnswer from text user button =
 
 
 --newtype Application  m = Application
---  { logger   :: Logger m
- -- }
+ -- { logger   :: Logger m
+-- }
 
-instance Has  (Logger (StateT s m)) (Logger  m, Config) where
-  getter (Logger a,_) =  dologLn a 
+--instance Has  (Logger (StateT s m)) (Application s m, Config) where
+ --getter   =  logger   
   --modifier f a = a {logger  = f . logger $ a}
 
