@@ -42,13 +42,17 @@ import Types
 import qualified UnliftIO.Concurrent as U (threadDelay)
 import Logger.Class (Log, Logger)
 
+{--
 responseToRequest ::
   (Monad m, MonadIO m, MonadThrow m, MonadCatch m) =>
   Url ->
   String ->
   String ->
   m (Response BS8.ByteString)
-responseToRequest Url {..} url key = do
+  -}
+responseToRequest :: (MonadReader (a, Config) m, MonadThrow m, MonadIO m) => Url ->  m (Response ByteString)
+responseToRequest Url {..}  = do
+  Config url key _ <- asks snd
   request' <- parseRequest (url <> key <> requestPath)
   let request = setRequestMethod requestMethod
                 $ setRequestQueryString requestQS
@@ -59,17 +63,14 @@ responseToRequest Url {..} url key = do
 class  Routable q a | q -> a where
   toUrl ::  q -> Url
   toAPI ::
-    (FromJSON a, Monad m, MonadIO m, MonadCatch m) =>
+   (FromJSON a, Monad m, MonadIO m, MonadCatch m, MonadReader (a, Config) IO) =>
     q ->
     ExceptT BotError m a
   toAPI q =
     catchE action checkError
     where
       action = do
-        --Config url key _ <- asks snd
-        let url =""
-        let key ="2"
-        req <- try $ liftIO $ responseToRequest (toUrl q) url key
+        req <- try $ liftIO $ responseToRequest (toUrl q) 
         req' <- hoistEither $ first HTTPError req
         hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
 

@@ -52,7 +52,7 @@ data Application  m = Application
 
 
 pri c a  = putStrLn $ show  $ fromLoggable c <> a   
-runBot ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO () 
+--runBot ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO ()
 runBot api = do
   let c ="jhk"
   let logger = Logger{dologLn =  pri c }
@@ -70,23 +70,25 @@ runBot api = do
         
 main = runBot  telegram
  
-telegram :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) () 
+--telegram ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) ()
 telegram  = do
   logI "это логгер" 
   getUpdates (Just 20) Nothing (Just 20) Nothing 
 
+getUpdates :: MonadReader (Logger m ,Config) m => Maybe Integer -> Maybe Integer -> Maybe Integer -> Maybe [String] -> ExceptT BotError m ()
 getUpdates  o l t a_u  = do
-      liftIO $ putStrLn "awaiting message"
-      Config _ _ btn  <- asks snd
+      --liftIO $ putStrLn "awaiting message"
+
       (Updates update) <- toAPI $ GetUpdates o l t a_u
       unless (null update) do
-         
+
         --let btn = 2
         user <- get
         mapM_
           ( \case
               Msg _ message
                 -> do liftIO $ putStrLn $ "answer message: " <> mesText message
+                      Config _ _ btn  <- asks snd
                       let id = fromId (mesFrom message)
                       let answer = prepareAnswer id (mesText message) user  btn
                       liftIO $ BS8.putStrLn $ snd answer
