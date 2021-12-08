@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -28,12 +27,13 @@ data Config = Config
 data Url= Url
  { --requestHost :: BS8.ByteString,
    requestMethod :: BS8.ByteString,
-   requestPath :: String,--BS8.ByteString,
+   requestPath :: String,
    requestQS :: Query 
  }
  
 data GetUpdates   = GetUpdates 
- { offset :: Maybe Integer,
+ { 
+   offset :: Maybe Integer,
    limit :: Maybe Integer,
    timeout :: Maybe Integer,
    allowed_updates :: Maybe [String]

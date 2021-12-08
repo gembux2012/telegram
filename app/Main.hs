@@ -1,13 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
---{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
---{-# LANGUAGE AllowAmbiguousTypes #-}
---{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -38,64 +32,51 @@ import Logger.Class
 import Logger.Types (Priority(..))
 import Control.Monad.Catch.Pure (MonadCatch)
 import qualified Data.Text as T
-
-newtype Logg m =  Logg  {pr ::String -> m()}
-
-data Application  m = Application 
- { logger :: Logger  m
- }
+import Streams
+import Logger.Types hiding (Config)
 
 
+main = runBot  telegram
 
-  
-
-
-
-pri c a  = putStrLn $ show  $ fromLoggable c <> a   
---runBot ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO ()
+runBot :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) a1 -> IO ()
 runBot api = do
-  let c ="jhk"
-  let logger = Logger{dologLn =  pri c }
   let list_user = Map.empty
   let config = Config "https://api.telegram.org/" 
                       "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/"
                       5
+  l <- initLogger defaultConfig 
+  let logger = Logger $ logMessage l                  
   res <- evalStateT (runReaderT (runExceptT  api ) (logger, config)) list_user
   case res of
-    Left (BotError err) -> dologLn  logger (fromLoggable ERROR <> fromLoggable err)
-    Right _ -> dologLn  logger (fromLoggable INFO <> fromLoggable " ")
-  return ()
+    Left (BotError err) ->  logMessage l (fromLoggable ERROR <> T.pack " " <> fromLoggable err)
+    Right _ ->logMessage l (fromLoggable INFO <> T.pack " " <> fromLoggable " OK ")
+  logStop l
 
- 
-        
-main = runBot  telegram
- 
---telegram ::  ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) ()
+telegram :: ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) ()
 telegram  = do
-  logI "это логгер" 
+  Config _ _ btn  <- asks getter
   getUpdates (Just 20) Nothing (Just 20) Nothing 
 
-getUpdates :: MonadReader (Logger m ,Config) m => Maybe Integer -> Maybe Integer -> Maybe Integer -> Maybe [String] -> ExceptT BotError m ()
+getUpdates :: Maybe Integer -> Maybe Integer -> Maybe Integer -> Maybe [String] -> ExceptT BotError (ReaderT (Logger IO, Config) (StateT (Map.Map Integer Integer) IO)) ()
 getUpdates  o l t a_u  = do
-      --liftIO $ putStrLn "awaiting message"
-
+      Config _ _ btn  <- asks getter
+      logI "awaiting message"
       (Updates update) <- toAPI $ GetUpdates o l t a_u
       unless (null update) do
-
-        --let btn = 2
         user <- get
         mapM_
           ( \case
               Msg _ message
-                -> do liftIO $ putStrLn $ "answer message: " <> mesText message
-                      Config _ _ btn  <- asks snd
+                -> do logI $ "answer message: " <> mesText message
+                      let btn = 2
                       let id = fromId (mesFrom message)
                       let answer = prepareAnswer id (mesText message) user  btn
-                      liftIO $ BS8.putStrLn $ snd answer
+                      logI  "send message"
                       toAPI $ uncurry (SendMessage id) answer
               CallbackQ _ callback
-               -> do liftIO $ putStrLn  "callback "
+               -> do logI "callback "
                      modify (Map.insert (fromId(cbFrom callback)) (read(cbData callback)))
+                     logI  "send message"
                      toAPI $ SendMessage (fromId(cbFrom callback)) " good " (BS8.pack "") 
           )
           update
@@ -103,7 +84,6 @@ getUpdates  o l t a_u  = do
         getUpdates (Just (last_id + 1 :: Integer )) Nothing (Just 20) Nothing
       getUpdates (Just 20) Nothing (Just 20) Nothing  
 
---prepareAnswer ::  p -> [Char] -> Int -> ([Char], BS8.ByteString)
 prepareAnswer from text user button = 
  case text of
   '/' : "repeat" -> ("how many times should I tell you ?", createButton)
@@ -116,11 +96,5 @@ prepareAnswer from text user button =
    
 
 
---newtype Application  m = Application
- -- { logger   :: Logger m
--- }
 
---instance Has  (Logger (StateT s m)) (Application s m, Config) where
- --getter   =  logger   
-  --modifier f a = a {logger  = f . logger $ a}
 

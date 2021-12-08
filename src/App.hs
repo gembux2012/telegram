@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -40,51 +39,51 @@ import Network.HTTP.Simple
 import Network.HTTP.Types
 import Types
 import qualified UnliftIO.Concurrent as U (threadDelay)
-import Logger.Class (Log, Logger)
+import Logger.Class (Log(..), Logger(..), logI)
+import Data.ByteString.Char8 (pack)
+import qualified Data.Map as Map
+import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get, StateT, StateT, StateT)
 
-{--
+
+
 responseToRequest ::
-  (Monad m, MonadIO m, MonadThrow m, MonadCatch m) =>
-  Url ->
-  String ->
-  String ->
-  m (Response BS8.ByteString)
-  -}
-responseToRequest :: (MonadReader (a, Config) m, MonadThrow m, MonadIO m) => Url ->  m (Response ByteString)
-responseToRequest Url {..}  = do
-  Config url key _ <- asks snd
-  request' <- parseRequest (url <> key <> requestPath)
+ (Monad m, MonadIO m, MonadThrow m, MonadCatch m ) =>
+  String -> String -> Url ->
+ m (Response BS8.ByteString)
+responseToRequest  host  path Url {..}  = do
+  --conf <- asks snd
+  request' <- parseRequest  (host <> path <> requestPath)
   let request = setRequestMethod requestMethod
                 $ setRequestQueryString requestQS
                 $ setRequestCheckStatus request'
-  --liftIO $ print request
   httpBS request 
 
-class  Routable q a | q -> a where
+class  Routable  q a | q -> a where
   toUrl ::  q -> Url
   toAPI ::
-   (FromJSON a, Monad m, MonadIO m, MonadCatch m, MonadReader (a, Config) IO) =>
+   (FromJSON a, Monad m, MonadIO m, MonadCatch m  ) =>
     q ->
-    ExceptT BotError m a
+    ExceptT BotError (ReaderT (Logger m, Config) (StateT (Map.Map Integer Integer) m)) a
   toAPI q =
     catchE action checkError
     where
       action = do
-        req <- try $ liftIO $ responseToRequest (toUrl q) 
+        Config host path _ <- asks snd
+        req <- try $ lift $ responseToRequest host path  (toUrl q) 
         req' <- hoistEither $ first HTTPError req
         hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
 
-instance Routable GetUpdates Updates where
+instance Routable  GetUpdates Updates where
   toUrl q =
     Url
       "GET "
-      "getupdates"
+       "getupdates"
       [ ("offset", bS $ offset q),
         ("limit", bS $ limit q),
         ("timeout", bS $ timeout q)
       ]
 
-instance Routable SendMessage Update where
+instance Routable  SendMessage Update where
   toUrl q =
     Url
       "GET"
@@ -114,16 +113,3 @@ instance Bytestrigable (Maybe ByteString) where
   bS Nothing = Nothing
   
 
-newtype Settings m = Settings {doGetConfig :: m Config}
-
-class Monad m => Setting m where
-  getSetting :: m Config
-
-instance
-  ( Has (Settings m) r,
-    Monad m,
-    MonadIO m
-  ) =>
-  Setting (ReaderT r m)
-  where
-  getSetting = asks getter >>= \(Settings doGetConf) -> lift doGetConf

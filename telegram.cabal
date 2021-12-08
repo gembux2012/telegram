@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d8180ddcccfb7b4d55620a193a24e828a67f2db7c68f4ec65f16453c2320be6
+-- hash: f24134b56629d0aae683d98c8ef6ffc0d6cb4dc5a410cec10f65ee6faaaa6afb
 
 name:           telegram
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
       Logger.App
       Logger.Class
       Logger.Types
+      Streams
       Types
   other-modules:
       Paths_telegram

@@ -2,10 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
@@ -34,6 +32,7 @@ class Loggable a where
   fromLoggable :: a -> Text
 
 class Monad m => Log m where
+  logX :: HasCallStack => Loggable a => Priority -> a  -> m ()
   logI :: HasCallStack => Loggable a => a -> m ()
   logW :: HasCallStack => Loggable a => a -> m ()
   logE :: HasCallStack => Loggable a => a -> m ()
@@ -41,15 +40,12 @@ class Monad m => Log m where
 instance
  (Has  (Logger m) r ,
     Monad m
-   -- MonadIO m 
   ) =>
   Log (ExceptT e (ReaderT r (StateT s m ))) where
-  logI  a = asks getter >>= \(Logger doLog) ->lift $ lift $ lift . doLog $ fromLoggable INFO <> " " <>  fromLoggable  a
- -- logW a =
-   -- asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable WARNING <> " " <>  fromLoggable a
-  --logE a =
-   -- asks getter >>= \(Logger doLog) -> lift . doLog $ fromLoggable ERROR <> " " <> fromLoggable a
-
+  logX pr a   = asks getter >>= \(Logger doLog) ->lift $ lift $ lift . doLog $ fromLoggable pr <> " " <>  fromLoggable  a
+  logI = logX INFO 
+  logW = logX WARNING
+  logE = logX ERROR
 
 
 instance Loggable Text where
