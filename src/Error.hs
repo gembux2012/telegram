@@ -1,22 +1,32 @@
 module Error where
 
-import Network.HTTP.Client.Conduit (HttpException(..),HttpExceptionContent(..), )
-import Types
-import Control.Error.Util (hoistEither)
-import Network.HTTP.Simple (getResponseStatus)
+import           Control.Error               (ExceptT)
+import           Control.Error.Util          (hoistEither)
+import           Control.Exception.Base      ()
+import           Network.HTTP.Client.Conduit (HttpException (..),
+                                              HttpExceptionContent (..))
+import           Network.HTTP.Simple         (getResponseStatus)
+import Control.Monad.Cont (liftIO, lift)
+import Logger.Class
 
 
 
-data APIError =HTTPError HttpException |  ParserError String
-data BotError = BotError String 
 
+data APIError =HTTPError HttpException |  ParserError String | ConfigError IOError | ConfigErrorJson String
+newtype BotError = BotError String
+
+checkError :: Monad m => APIError -> ExceptT BotError m a
 checkError (HTTPError(HttpExceptionRequest _  (ConnectionFailure e))) = do
-            hoistEither $ Left $ BotError "connection failure"
+            hoistEither $ Left $ BotError $ "connection failure" <> " " <> show e
 checkError (HTTPError(HttpExceptionRequest _  (StatusCodeException resp  _))) = do
-            hoistEither $ Left $ BotError $ " no 200: " <> show (getResponseStatus resp) 
+            hoistEither $ Left $ BotError $ " no 200: " <> show (getResponseStatus resp)
 checkError (HTTPError(InvalidUrlException url er)) = do
-            hoistEither $ Left $ BotError $ show $ "url : " <> url <> " " <> er         
+            hoistEither $ Left $ BotError $ show $ "url : " <> url <> " " <> er
 checkError (HTTPError(HttpExceptionRequest _ content)) = do
-             hoistEither $ Left $ BotError $ show content    
-checkError (ParserError err') = do 
-             hoistEither $ Left $ BotError $ "can not parse: " <>  err' 
+             hoistEither $ Left $ BotError $ show content
+checkError (ParserError err') = do
+             hoistEither $ Left $ BotError $ "can not parse: " <>  err'
+checkError (ConfigError  err') = do
+             hoistEither $ Left $ BotError $ "can not parse: " <> show  err'
+checkError (ConfigErrorJson err') = do
+             hoistEither $ Left $ BotError   err'

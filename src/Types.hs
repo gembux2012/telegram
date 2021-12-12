@@ -16,6 +16,8 @@ import Data.Void (Void)
 import Data.Aeson.Casing
 import Data.Foldable
 import Data.ByteString.Char8 (ByteString)
+import Turtle
+import Prelude hiding (FilePath)
 
 data Config = Config
   { host :: String,
@@ -139,3 +141,17 @@ instance FromJSON Chat where
     parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
 
+data Settings = Settings
+   { messenger  :: Text
+   , pathConfig   :: FilePath
+   
+   }
+
+settingsP :: Parser Settings
+settingsP = 
+  Settings <$> argText "messendger"  "type messager"
+           <*> argPath "cfg" "path to config"
+
+
+description :: Description
+description = "bot"

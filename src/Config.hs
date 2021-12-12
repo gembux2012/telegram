@@ -20,11 +20,11 @@ import           Logger.Types
 warning :: [Char]
 warning = ", default values will be used!!."
 
-readConfig :: Monad m => [Char] -> ExceptT BotError IO (ExceptT APIError m Config)
+--readConfig :: Monad m => [Char] -> ExceptT BotError IO Config
 readConfig path =
   catchE action checkError
   where
     action = do
       content <- lift $ try $ BS.readFile path
       content' <- hoistEither $ first ConfigError content
-      return $ hoistEither $ note (ConfigErrorJson  "Invalid Json!! " ) (decodeStrict content' :: Maybe Config)
+      return $ hoistEither $ note (ConfigErrorJson  "error in config file!!" ) (decodeStrict content' :: Maybe Config)

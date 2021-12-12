@@ -20,7 +20,7 @@ import Control.Monad.RWS.Lazy (RWST, MonadIO, tell, liftIO, ask)
 import Data.String
 import Control.Monad.State.Lazy (StateT)
 import Control.Error (ExceptT)
-import Error (BotError)
+--import Error (BotError)
 import qualified Data.Map as Map
 
 
