@@ -16,22 +16,6 @@ import GHC.Stack.Types (HasCallStack)
 
 data Priority = INFO | NOTICE | WARNING | ERROR deriving (Show, Eq, Ord)
 
-data Config  = Config 
-  {logOpts :: LogOpts
-   --vkOpts :: VKOpts
-  }
-  deriving (Generic,  FromJSON, Show)
-
-defaultConfig= Config
-  { logOpts = defaultLogOpts
-  
-  }
-
-newtype VKOpts = VKOpts
- { button :: String
- }
- deriving (Generic,  FromJSON, Show)
- 
 data LogOpts = LogOpts
   { pathToLog :: String,
     nameLog :: String,

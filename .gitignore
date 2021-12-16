@@ -2,6 +2,5 @@
 *~
 .idea/
 /out/
-bot.error.log
-bot.error.log1
+bot.*
 telegram.cabal

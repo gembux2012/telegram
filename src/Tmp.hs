@@ -6,7 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Main where
+module Tmp where
 
 import App
 import Control.Error (ExceptT, runExceptT)
@@ -62,10 +62,10 @@ startBot  = do
     Right config -> do  
       log <-initLog (logOpts config)
       let logger = Logger $ msgLog log
-     -- when ( T.pack "t" /=  api) do
-      --  msgLog log (fromLoggable INFO <> T.pack " unknown key --" <> api <> T.pack " will be launched bot for telegramm")
-       -- forkIO $ runBot telegram logger (telegramOpts config) list_user log
-      -- return()
+      when ( T.pack "t" /=  api) do
+        msgLog log (fromLoggable INFO <> T.pack " unknown key --" <> api <> T.pack " will be launched bot for telegramm")
+        forkIO $ runBot telegram logger (telegramOpts config) list_user log
+        return()
       
       forkIO $ runBot telegram logger (telegramOpts config) list_user log
       forever $ do
@@ -85,10 +85,10 @@ runBot api logger config  list_user log =
  do
      res <- evalStateT (runReaderT (runExceptT  api ) (logger, config)) list_user
      case res of
-       Left (BotError error) -> do
-        msgLog log (fromLoggable ERROR <> T.pack " " <> fromLoggable error)
-        exitSuccess
+       Left (BotError error) ->  msgLog log (fromLoggable ERROR <> T.pack " " <> fromLoggable error)
        Right _ -> msgLog log (fromLoggable INFO <> T.pack " " <> fromLoggable " OK ")
+
+
 
 
 

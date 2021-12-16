@@ -1,0 +1,18 @@
+{
+  "logOpts": {
+    "pathToLog": "",
+    "nameLog": "bot",
+    "sizeLog" : 1000,
+    "maxNumFilesLog" : 4,
+    "priority": 1,
+    "displayMsg": 1
+  },
+  "telegramOpts" :
+  { "host" :  "https://api.telegram.org/",
+    "path" : "bot2012575953:AAHVSAkJou2YKziQWhmny3K9g32jSRImNt4/",
+    "button" : 1
+
+  }
+
+}
+

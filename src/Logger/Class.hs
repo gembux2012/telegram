@@ -15,13 +15,13 @@ import Control.Monad.Reader (ReaderT, asks, lift, runReaderT)
 import Data.Has (Has, getter)
 import Data.Text (Text, append, pack)
 import GHC.Stack.Types (HasCallStack)
-import Logger.Types (Priority (..), Config)
 import Control.Monad.RWS.Lazy (RWST, MonadIO, tell, liftIO, ask)
 import Data.String
 import Control.Monad.State.Lazy (StateT)
 import Control.Error (ExceptT)
 --import Error (BotError)
 import qualified Data.Map as Map
+import Logger.Types (Priority(..))
 
 
 
