@@ -37,6 +37,7 @@ import Streams (initLog, msgLog, stopLog)
 import Turtle.Options (options)
 import Control.Monad.Cont (when, forever)
 import Turtle (printf)
+import Control.Concurrent.Async (race_)
 import Types
 import Config.Config
 import Config.Types
@@ -62,22 +63,18 @@ startBot  = do
     Right config -> do  
       log <-initLog (logOpts config)
       let logger = Logger $ msgLog log
-     -- when ( T.pack "t" /=  api) do
-      --  msgLog log (fromLoggable INFO <> T.pack " unknown key --" <> api <> T.pack " will be launched bot for telegramm")
-       -- forkIO $ runBot telegram logger (telegramOpts config) list_user log
-      -- return()
+      let api' = telegram
       
-      forkIO $ runBot telegram logger (telegramOpts config) list_user log
-      forever $ do
-        arg <- getLine
-        case arg of
-          "stop" -> do
-            msgLog log (fromLoggable INFO <> T.pack " bot stopped ")
-            stopLog log
-            exitSuccess
-          _ -> msgLog log (fromLoggable INFO <> T.pack " unknown commnd " <> T.pack arg) 
-          
-      stopLog log
+      race_ ( runBot api' logger (telegramOpts config) list_user log) (do {
+                                                                              forever $ do
+                                                                                arg <- getLine
+                                                                                case arg of
+                                                                                  "stop" -> do
+                                                                                    msgLog log (fromLoggable INFO <> T.pack " bot stopped ")
+                                                                                    stopLog log
+                                                                                    exitSuccess
+                                                                                  _ -> msgLog log (fromLoggable INFO <> T.pack " unknown commnd " <> T.pack arg) 
+                                                                              stopLog log})
 
  
   
