@@ -15,7 +15,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE Strict #-}
 
-module Telegram.Class where
+module Class where
 
 import Control.Error
 import Control.Error.Util (hoistEither)

@@ -11,6 +11,7 @@
 module App where
 
 
+import           Control.Concurrent.Lifted   (MVar, newEmptyMVar, putMVar, takeMVar)
 import           Control.Error
 import           Control.Error.Util          (hoistEither)
 import           Control.Monad
@@ -30,7 +31,7 @@ import qualified Data.ByteString.Lazy        as LBS
 import           Data.Char                   (toLower)
 import           Data.Has                    (Has, getter)
 import qualified Data.Map                    as Map
-import           Data.Text.Internal.Lazy     (Text)
+--import           Data.Text.Internal.Lazy     (Text)
 import           Error
 import           Logger.Class                (Log (..), Logger (..), logI)
 import           Network.HTTP.Client.Conduit (HttpException (..),
@@ -39,9 +40,13 @@ import           Network.HTTP.Client.Conduit (HttpException (..),
                                               setRequestCheckStatus)
 import           Network.HTTP.Simple
 import           Network.HTTP.Types
-import           Telegram.Types              (Key (..), Keyboard (..), Url (..))
+import           Data.Text                 (Text)
+import           Telegram.Types              (Key (..), Keyboard (..), Url (..),)
+import Types (Stream(..), LogCommand(..))
 import qualified UnliftIO.Concurrent         as U (threadDelay)
-
+import Logger.Types (LogOpts, Priority)
+import Control.Concurrent (forkIO)
+import Logger.App (printLog)
 
 
 responseToRequest ::
@@ -66,4 +71,33 @@ prepareAnswer from text user button =
     createButton = LBS.toStrict $ encode $ Keyboard [ [1.. button] >>= \y -> [Key (show y) (show y)]]
     r = fromMaybe 1 (Map.lookup from user)
 
+initLog :: LogOpts -> IO Stream
+initLog conf = do
+  m <- newEmptyMVar
+  let stream = Stream m
+  _ <- forkIO  (logger conf stream)
+  return stream
+
+
+msgLog :: Stream -> Priority -> Text -> IO ()
+msgLog (Stream m) pr s = putMVar m (Message pr s)
+
+stopLog :: Stream -> IO ()
+stopLog (Stream m) = do
+  s <- newEmptyMVar
+  putMVar m (Stop s)
+  takeMVar s
+
+logger ::LogOpts -> Stream -> IO ()
+logger logOpts (Stream m) = loop
+  where
+    loop = do
+      cmd <- takeMVar m
+      case cmd of
+        Message pr  msg -> do
+          printLog logOpts pr msg
+          loop
+        Stop s -> do
+        --  putStrLn "logger: stop"
+          putMVar s ()
 

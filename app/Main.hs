@@ -4,12 +4,12 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 
 module Main where
 
-import           App
-import           Control.Error                     (ExceptT, runExceptT)
+import           Control.Error                     (ExceptT, runExceptT, isJust)
 import           Control.Monad                     ()
 import           Control.Monad.Catch.Pure          ()
 import           Control.Monad.Reader              (ReaderT, asks, runReaderT,
@@ -26,78 +26,99 @@ import qualified Data.Text                         as T
 import           Error
 import           Logger.Class
 import           Text.Read                         ()
---import Logger.Types (Config(..), TelegramOpts(..), defaultLogOpts, Priority(..) )
 import           Control.Concurrent                (forkIO)
 import           GHC.Base                          (error)
 import           Prelude                           hiding (FilePath, error, log)
 import           System.Directory.Internal.Prelude (exitFailure, hFlush, stdout)
-import           Turtle                            (FilePath, encodeString)
---import Config
 import           System.Exit                       (exitSuccess)
---import Types
 import           Config.Config
 import           Config.Types
 import           Control.Concurrent.Async          (race_)
 import           Control.Monad.Cont                (forever, when)
+import           Data.ByteString.Char8             (hPutStr)
 import           Logger.Types
-import           Streams                           (initLog, msgLog, stopLog)
-import           Telegram.Api
+import           Telegram.Api                      (telegram)
+import           Telegram.Types                    (TelegramOpts)
 import           Turtle                            (printf)
 import           Turtle.Options                    (options)
 import           Types
-import Data.ByteString.Char8 (hPutStr)
+import App (initLog, msgLog, stopLog)
 
 
-main =  startBot
 
-startBot :: IO ()
-startBot  = do
-  (Settings api config_path) <- options description settingsP
+main =  initBot >>= \set -> runBot set
 
-  let list_user = Map.empty
-
-  conf <- readConfig  config_path
-  case conf of
-    Left  error -> do
-     log <-initLog defaultLogOpts
-     msgLog log (fromLoggable INFO <> T.pack " bot abnormal termination ")
-     msgLog log (fromLoggable ERROR <> T.pack " file : " <> T.pack error )
+initBot :: IO SettingsB
+initBot = do
+ (Settings msgndgr config_path) <- options description settingsP
+ config <- readConfig config_path
+ case config of
+   Left error -> do
+     log <- initLog defaultLogOpts
+     msgLog log INFO (fromLoggable INFO <>  " bot abnormal termination, see error log ")
+     msgLog log ERROR (fromLoggable ERROR <>  " file : " <> T.pack error)
      stopLog log
-    Right config -> do
-      log <-initLog (logOpts config)
-      let logger = Logger $ msgLog log
-      let api' = telegram
+     exitSuccess
+   Right config -> do
+     log <- initLog defaultLogOpts
+     let settings = SettingsB  Map.empty config (Logger $ msgLog log) log
+     api <- switchMessenger (T.unpack (msgndgr)) config
+     case api of
+      Right result -> do 
+        msgLog log INFO (fromLoggable INFO <> cnd result  ) 
+        return $ settings (fst result)
+      Left err -> do 
+        msgLog log INFO (fromLoggable INFO <>  " bot abnormal termination, see error log ")
+             msgLog log ERROR (fromLoggable ERROR <>  " file : " <> T.pack err)
+             stopLog log
+             exitSuccess
+  
+  
+   
 
-      race_ ( runBot api' logger (telegramOpts config) list_user log) (do {
-                                                                              forever $ do
-                                                                                hPutStr "bot:>"
-                                                                                hFlush stdout
-                                                                                arg <- getLine
-                                                                                putStrLn "kilkujlk"
-                                                                                case arg of
-                                                                                  "stop" -> do
-                                                                                    msgLog log (fromLoggable INFO <> T.pack " bot stopped ")
-                                                                                    stopLog log
-                                                                                    exitSuccess
-                                                                                  _ -> msgLog log (fromLoggable INFO <> T.pack " unknown commnd " <> T.pack arg)
-                                                                                return()
-                                                                              })
+runBot settings =
+ race_
+        (do res <- evalStateT (runReaderT (runExceptT  (api settings )) (logger settings, telegramOpts (config settings))) (list_user settings)
+            case res of
+              Left (BotError error) -> do
+               msgLog (log settings) ERROR (fromLoggable ERROR <> "  " <> T.pack error)
+               stopLog (log settings)
+               exitSuccess
+              Right _ -> msgLog (log settings) INFO (fromLoggable INFO <> " " <> " OK ")
+              )
+       -- | to doI don’t know how else to stop it
+        (forever $ do
+           arg <- getLine
+           case arg of
+             "stop" -> do
+               msgLog (log settings) INFO (fromLoggable INFO <> T.pack " bot stopped from console ")
+               stopLog (log settings)
+               exitSuccess
+             _ -> msgLog (log settings) INFO (fromLoggable INFO <> T.pack " unknown commnd " <> T.pack arg)
+           return ())
 
 
 
-runBot api logger config  list_user log =
- do
-     res <- evalStateT (runReaderT (runExceptT  api ) (logger, config)) list_user
-     case res of
-       Left (BotError error) -> do
-        msgLog log (fromLoggable ERROR <> T.pack " " <> fromLoggable error)
-        stopLog log
-        exitSuccess
-       Right _ -> msgLog log (fromLoggable INFO <> T.pack " " <> fromLoggable " OK ")
-
-
-
-
-
-
-
+switchMessenger api config =
+ case api of
+  Just val -> 
+   case val of 
+    "t" -> return (default_ "will be launched telegram")
+    {--
+    "vk" -> do
+      if (isJust (vkOpts config))
+        then do 
+         return $ Right (vk, "will be launched VK")
+        else  
+          return (default_ " section 'vkOpts' not found in config file, will be launched telegram ")
+          --}
+    _ -> return(default_ "key " <> api <> " not found, will be launched telegram ")
+  Nothing  -> return default_ " "
+  where 
+    default_ msg = 
+      if  isJust (telegramOpts config)
+        then 
+          return $ Right (telegram, msg)
+           else  
+            return $ Left " section 'telegramOpts' not found in config file"
+     

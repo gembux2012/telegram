@@ -7,13 +7,14 @@ module Logger.App
   )
 where
 
-import Logger.Types (LogOpts (..))
+import Logger.Types (LogOpts (..), Priority(..))
 import Control.Exception.Base (SomeException, handle, try)
 import Control.Monad as CM
 import Data.Text (Text, unpack)
 import Data.Time as DT
 import System.Directory (getFileSize, renamePath)
 import System.FilePath.Posix (takeBaseName, takeExtension)
+import Data.Char (toLower)
 
 
 
@@ -24,9 +25,9 @@ fileSize path = handle handler (do getFileSize path)
     handler :: IOError -> IO Integer
     handler _ = return 0
 
-setLogName :: String -> Int -> String
-setLogName name pr
-  | pr == 1 = takeBaseName name ++ ".error" ++ takeExtension name
+setLogName :: String -> Int -> Priority -> String
+setLogName name  logs pr
+  | logs == 1 = takeBaseName name ++ "." ++ map toLower (show pr)  ++ takeExtension name
   | otherwise = name
 
 renMovF :: String -> String -> IO ()
@@ -52,14 +53,14 @@ rotationLog path sizelogf sizelog quantity =
       | n == q = path
       | otherwise = path ++ "fghfg"
 
-printLog :: LogOpts -> Text -> IO ()
-printLog LogOpts {..} str =
+printLog :: LogOpts -> Priority -> Text -> IO ()
+printLog LogOpts {..} pr str =
   do
     td <-
       getZonedTime
         >>= \t ->
           return (formatTime defaultTimeLocale "%m-%d-%Y %H:%M:%S %Z" t)
-    let logName = setLogName nameLog priority
+    let logName = setLogName nameLog manyLog pr
     let strOut = td ++ " " ++ unpack str ++ "\n"
     sizeLogF <- fileSize $ pathToLog ++ logName
     _ <-

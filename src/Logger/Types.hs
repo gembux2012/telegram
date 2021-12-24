@@ -22,10 +22,11 @@ data LogOpts = LogOpts
     sizeLog :: Integer,
     maxNumFilesLog :: Int,
     displayMsg :: Int,
-    priority :: Int
+    manyLog :: Int
   }
-  deriving (Show)
+  deriving Show
  
+
 instance FromJSON LogOpts where
    parseJSON = withObject "logops" $ \o -> do
      pathToLog <- o .:? "pathToLog" .!=  pathToLog defaultLogOpts
@@ -33,7 +34,7 @@ instance FromJSON LogOpts where
      sizeLog <- o .:? "sizeLog" .!= sizeLog defaultLogOpts
      maxNumFilesLog <- o .:? "maxNumFilesLog" .!= maxNumFilesLog defaultLogOpts
      displayMsg  <- o .:? "displayMsg" .!= displayMsg defaultLogOpts
-     priority  <- o .:? "priority" .!= priority defaultLogOpts
+     manyLog  <- o .:? "priority" .!= manyLog defaultLogOpts
      return  LogOpts {..}
 
 
@@ -45,5 +46,5 @@ defaultLogOpts =
       sizeLog = 250,
       maxNumFilesLog = 3,
       displayMsg = 1,
-      priority = 1
+      manyLog = 1
     }

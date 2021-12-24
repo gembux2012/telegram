@@ -15,7 +15,7 @@ import qualified Data.ByteString.Char8    as BS8
 import           Data.Has                 (getter)
 import qualified Data.Map                 as Map
 import           Logger.Class             (Logger, logI)
-import           Telegram.Class           (toAPI)
+import           Class           (toAPI)
 import Telegram.Types
 
 

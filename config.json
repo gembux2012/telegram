@@ -2,9 +2,9 @@
   "logOpts": {
     "pathToLog": "",
     "nameLog": "bot",
-    "sizeLog" : 1000,
+    "sizeLog" : 250,
     "maxNumFilesLog" : 4,
-    "priority": 1,
+    "manylog": 1,
     "displayMsg": 1
   },
   "telegramOpts" :

@@ -10,7 +10,7 @@ import Logger.Types (LogOpts)
 
 data Config  = Config 
   {logOpts :: LogOpts,
-   telegramOpts :: TelegramOpts
+   telegramOpts :: Maybe TelegramOpts
   }
   deriving (Generic,  FromJSON, Show)
 

@@ -26,7 +26,7 @@ import Logger.Types (Priority(..))
 
 
 
-newtype Logger m = Logger {dologLn :: HasCallStack => Text -> m ()}
+newtype Logger m = Logger {dologLn :: HasCallStack => Priority -> Text -> m ()}
   
 class Loggable a where
   fromLoggable :: a -> Text
@@ -42,7 +42,7 @@ instance
     Monad m
   ) =>
   Log (ExceptT e (ReaderT r (StateT s m ))) where
-  logX pr a   = asks getter >>= \(Logger doLog) ->lift $ lift $ lift . doLog $ fromLoggable pr <> " " <>  fromLoggable  a
+  logX pr a   = asks getter >>= \(Logger doLog) ->  lift $ lift $ lift . doLog  pr $ fromLoggable pr <> " " <>  fromLoggable  a
   logI = logX INFO 
   logW = logX WARNING
   logE = logX ERROR
