@@ -45,24 +45,29 @@ import qualified Data.Map as Map
 import Control.Monad.State.Lazy (runStateT, evalStateT, modify, get, StateT, StateT, StateT)
 import Telegram.Types (Url(..), TelegramOpts(..), GetUpdates(..), Updates(..), SendMessage(..), Update(..),)
 import App (responseToRequest)
+import Config.Types (Config(..))
+import VK.Types (GetAccess, Access, access_token, group_id, v)
 
   
 
 class  Routable  q a | q -> a where
   toUrl ::  q -> Url
   toAPI ::
-   (FromJSON a, Monad m, MonadIO m, MonadCatch m  ) =>
-    q ->
-    ExceptT BotError (ReaderT (Logger m, TelegramOpts) (StateT (Map.Map Integer Integer) m)) a
-  toAPI q =
+   (FromJSON a, Monad m, MonadIO m, MonadCatch m, MonadFail m  ) =>
+    String -> q ->
+    ExceptT BotError (ReaderT (Logger m, Config) (StateT (Map.Map Integer Integer) m)) a
+  toAPI r q =
     catchE action checkError
     where
       action = do
-        TelegramOpts host path _ <- asks snd
-        req <- try $ lift $ responseToRequest host path  (toUrl q) 
+        --Config _ (Just(TelegramOpts host path _)) <- asks snd
+        req <- try $ lift $ responseToRequest r  (toUrl q) 
         req' <- hoistEither $ first HTTPError req
         hoistEither $ note (ParserError $ show (getResponseBody req')) (decodeStrict (getResponseBody req'))
-
+  toRoute :: (FromJSON a, Monad m, MonadIO m, MonadCatch m, MonadFail m  ) => String -> (q ->
+               ExceptT BotError (ReaderT (Logger m, Config) (StateT (Map.Map Integer Integer) m)) a)
+  toRoute r  = toAPI r 
+  
 instance Routable  GetUpdates Updates where
   toUrl q =
     Url
@@ -82,7 +87,17 @@ instance Routable  SendMessage Update where
         ("text", bS $ Just (text q)),
         ("reply_markup", bS $ Just (reply_markup q))
       ]
-
+      
+instance Routable GetAccess Access where
+  toUrl q =
+     Url
+         "GET"
+         "method/groups.getLongPollServer"
+         [ ("access_token" , bS $ Just (access_token q)),
+           ("group_id" , bS $ Just (group_id q)),
+           ("v" , bS $ Just (v q))
+         ]
+ 
 class Bytestrigable a where
   bS :: a -> Maybe BS8.ByteString
 

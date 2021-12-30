@@ -47,6 +47,9 @@ instance
   logW = logX WARNING
   logE = logX ERROR
 
+--instance Log IO where
+ --logX pr a  log = log pr $ fromLoggable pr <> " " <>  fromLoggable  a 
+  
 
 instance Loggable Text where
   fromLoggable = id

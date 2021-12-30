@@ -46,39 +46,33 @@ import App (initLog, msgLog, stopLog)
 
 
 
-main =  initBot >>= \set -> runBot set
+main =  initBot >>= \set  -> runBot set
 
-initBot :: IO SettingsB
 initBot = do
- (Settings msgndgr config_path) <- options description settingsP
- config <- readConfig config_path
- case config of
-   Left error -> do
-     log <- initLog defaultLogOpts
-     msgLog log INFO (fromLoggable INFO <>  " bot abnormal termination, see error log ")
-     msgLog log ERROR (fromLoggable ERROR <>  " file : " <> T.pack error)
-     stopLog log
-     exitSuccess
-   Right config -> do
-     log <- initLog defaultLogOpts
-     let settings = SettingsB  Map.empty config (Logger $ msgLog log) log
-     api <- switchMessenger (T.unpack (msgndgr)) config
-     case api of
-      Right result -> do 
-        msgLog log INFO (fromLoggable INFO <> cnd result  ) 
-        return $ settings (fst result)
-      Left err -> do 
-        msgLog log INFO (fromLoggable INFO <>  " bot abnormal termination, see error log ")
-             msgLog log ERROR (fromLoggable ERROR <>  " file : " <> T.pack err)
-             stopLog log
-             exitSuccess
-  
-  
-   
+  (Settings msgndgr config_path) <- options description settingsP
+  config <- readConfig config_path
+  case config of
+    Left error -> do
+      log <- initLog defaultLogOpts
+      msgLog log INFO (fromLoggable INFO <> " bot abnormal termination, see error log ")
+      msgLog log ERROR (fromLoggable ERROR <> " file : " <> T.pack error)
+      stopLog log
+      exitFailure
+    Right config -> do
+      log <- initLog (logOpts config)
+      case switchMessenger (T.unpack <$> msgndgr) config of
+        Right api -> do
+          msgLog log INFO (fromLoggable INFO <> T.pack (snd api))
+          return $ SettingsB Map.empty config (Logger $ msgLog log) log (fst api)
+        Left er -> do
+          msgLog log INFO (fromLoggable INFO <> " bot abnormal termination, see error log ")
+          msgLog log ERROR (fromLoggable ERROR <> T.pack er)
+          stopLog log
+          exitFailure
 
-runBot settings =
- race_
-        (do res <- evalStateT (runReaderT (runExceptT  (api settings )) (logger settings, telegramOpts (config settings))) (list_user settings)
+runBot settings  =
+      race_
+        (do res <- evalStateT (runReaderT (runExceptT  (api settings )) (logger settings, config settings)) (list_user settings)
             case res of
               Left (BotError error) -> do
                msgLog (log settings) ERROR (fromLoggable ERROR <> "  " <> T.pack error)
@@ -86,7 +80,7 @@ runBot settings =
                exitSuccess
               Right _ -> msgLog (log settings) INFO (fromLoggable INFO <> " " <> " OK ")
               )
-       -- | to doI don’t know how else to stop it
+       -- | to do I don’t know how else to stop it
         (forever $ do
            arg <- getLine
            case arg of
@@ -98,27 +92,11 @@ runBot settings =
            return ())
 
 
+switchMessenger val  config =
+ case val of
+  Just "t" -> default_ "will be launched telegram"
+  Just k  -> default_ $ " key '-" <> k <> "' not found, will be launched telegram"
+ where
+  default_ msg | isJust (telegramOpts config) = Right (telegram, msg)
+               | otherwise = Left " section 'telegramOpts' not found in config file"
 
-switchMessenger api config =
- case api of
-  Just val -> 
-   case val of 
-    "t" -> return (default_ "will be launched telegram")
-    {--
-    "vk" -> do
-      if (isJust (vkOpts config))
-        then do 
-         return $ Right (vk, "will be launched VK")
-        else  
-          return (default_ " section 'vkOpts' not found in config file, will be launched telegram ")
-          --}
-    _ -> return(default_ "key " <> api <> " not found, will be launched telegram ")
-  Nothing  -> return default_ " "
-  where 
-    default_ msg = 
-      if  isJust (telegramOpts config)
-        then 
-          return $ Right (telegram, msg)
-           else  
-            return $ Left " section 'telegramOpts' not found in config file"
-     

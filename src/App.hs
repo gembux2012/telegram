@@ -51,10 +51,10 @@ import Logger.App (printLog)
 
 responseToRequest ::
  (Monad m, MonadIO m, MonadThrow m, MonadCatch m ) =>
-  String -> String -> Url ->
+  String ->  Url ->
  m (Response BS8.ByteString)
-responseToRequest  host  path Url {..}  = do
-  request' <- parseRequest  (host <> path <> requestPath)
+responseToRequest  route Url {..}  = do
+  request' <- parseRequest  (route <> requestPath)
   let request = setRequestMethod requestMethod
                 $ setRequestQueryString requestQS
                 $ setRequestCheckStatus request'
